@@ -1,0 +1,15 @@
+# Build artifacts
+tailscale
+tailscaled
+tailscale-*
+tailscaled-*
+*.tar.gz
+*.zip
+
+# Go build cache
+go.mod
+go.sum
+
+# Temporary files
+*.tmp
+*.log
