@@ -81,12 +81,12 @@ jobs:
 
       - name: Build tailscaled
         run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} ./build_dist.sh --extra-small tailscale.com/cmd/tailscaled
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} ./build_dist.sh --small tailscale.com/cmd/tailscaled
           mv tailscaled tailscaled-${{ matrix.name }}
 
       - name: Build tailscale
         run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} ./build_dist.sh --extra-small tailscale.com/cmd/tailscale
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} ./build_dist.sh --small tailscale.com/cmd/tailscale
           mv tailscale tailscale-${{ matrix.name }}
 
       - name: Upload artifacts
@@ -121,7 +121,7 @@ jobs:
           TAG="${{ needs.check-release.outputs.tag }}"
           gh release create "$TAG" \
             --title "Tailscale Small $TAG" \
-            --notes "Tailscale $TAG built with --extra-small flag for linux/amd64, linux/arm64, and linux/mipsle" \
+            --notes "Tailscale $TAG built with --small flag for linux/amd64, linux/arm64, and linux/mipsle" \
             binaries/*
         env:
           GH_TOKEN: ${{ github.token }}
