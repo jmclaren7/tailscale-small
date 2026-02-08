@@ -15,6 +15,8 @@ on:
 jobs:
   check-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       tag: ${{ steps.get-tag.outputs.tag }}
       should-build: ${{ steps.check.outputs.should-build }}
@@ -51,6 +53,8 @@ jobs:
     needs: check-release
     if: needs.check-release.outputs.should-build == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         include:
