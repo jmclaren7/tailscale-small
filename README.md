@@ -1,20 +1,19 @@
-# tailscale-small
+# Tailscale-Small
 
-Automatically builds [Tailscale](https://github.com/tailscale/tailscale) binaries with flags for space or memory constrained devices like routers running OpenWrt.
+This repository automatically builds [Tailscale](https://github.com/tailscale/tailscale) binaries from the official Tailscale repository using the custom `build_custom.sh` script from this repository. New flags are called (`--small` and `--smallaio`) to create reduced size binaries, usefull for low-spec devices devices.
 
-## What is this?
-
-This repository automatically builds `tailscale` and `tailscaled` binaries from the official Tailscale repository using the custom `build_custom.sh` script from this repository. The custom flags are called using a new `--small` and `--smallaio` build script option.
-
-Using the --extra-small option in the tailscale build script can cause problems, this project aims to provide binaries that will work as easily as the full size ones.
-
-Some OpenWRT devices are space constrained, memory constrained or both. For memory constrained devices you might prefer the seperate `tailscale` and `tailscald` binaries. For space constrained systems you will definitly want to use `tailscald-aio` (name it tailscaled and create a symlink to it named tailscale). 
+Using the --extra-small option in the tailscale build script can cause problems, this project aims to provide binaries that will work as easily as the full size ones. 
 
 ## Supported Platforms
 
 - **linux/amd64** - x86-64 Linux systems
 - **linux/arm64** - ARM64/aarch64 Linux systems  
 - **linux/ramips** - MIPS little-endian (commonly used in routers / OpenWRT)
+
+## Tailscald-AIO
+Some devices (like OpenWRT) are space constrained, memory constrained or both. For memory constrained systems you might prefer the seperate `tailscale` and `tailscald` binaries. 
+
+For space constrained systems you'll want to use `tailscald-aio`. Rename it to `tailscaled` and then create a symlink to it named `tailscale`, using the symlink will cause `tailscaled` to behave like `tailscale`.
 
 ## Releases
 
