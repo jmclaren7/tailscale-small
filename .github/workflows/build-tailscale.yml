@@ -96,6 +96,12 @@ jobs:
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} sh ./build_custom.sh --small tailscale.com/cmd/tailscale
           mv tailscale ../tailscale-${{ matrix.name }}
 
+      - name: Build tailscaled-aio
+        working-directory: tailscale
+        run: |
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} sh ./build_custom.sh --smallaio tailscale.com/cmd/tailscaled
+          mv tailscaled ../tailscaled-aio-${{ matrix.name }}
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -103,6 +109,7 @@ jobs:
           path: |
             tailscaled-${{ matrix.name }}
             tailscale-${{ matrix.name }}
+            tailscaled-aio-${{ matrix.name }}
 
   release:
     needs: [check-release, build]
@@ -128,7 +135,7 @@ jobs:
           TAG="${{ needs.check-release.outputs.tag }}"
           gh release create "$TAG" \
             --title "Tailscale Small $TAG" \
-            --notes "Tailscale $TAG built with --small flag for linux/amd64, linux/arm64, and linux/mipsle" \
+            --notes "Tailscale $TAG built with --small and --smallaio flags for linux/amd64, linux/arm64, and linux/mipsle. AIO includes CLI support." \
             binaries/*
         env:
           GH_TOKEN: ${{ github.token }}

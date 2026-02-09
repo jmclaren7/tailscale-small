@@ -28,45 +28,41 @@ EOF
 	exit 0
 fi
 
+${tags:+-echo "Warning! Existing Build Tags: $tags"}
+
 tags="${TAGS:-}"
 ldflags="-X tailscale.com/version.longStamp=${VERSION_LONG} -X tailscale.com/version.shortStamp=${VERSION_SHORT}"
 
 # build_dist.sh arguments must precede go build arguments.
 while [ "$#" -gt 1 ]; do
 	case "$1" in
-    	--small)
-		# --small is a smaller binary but still works on OpenWRT.
-		echo --small Custom, small binary.
-  		if [ ! -z "${TAGS:-}" ]; then
-			echo "set either --small or \$TAGS, but not both"
-			exit 1
-		fi
+	--smallaio)
+		# --smallaio is the same as --small but it's AIO (CLI support), ideal for low storage devices.
+		echo "--smallaio (small AIO binary with CLI support)"
 		shift
 		ldflags="$ldflags -w -s"
-    		tags="${tags:+$tags,}$(GOOS= GOARCH= $go run ./cmd/featuretags --min --add=osrouter,osusergo,netgo | sed -e 's/ts_omit_iptables,//g' -e 's/ts_omit_unixsocketidentity,//g')"
-    		;;
+    	tags="${tags:+$tags,}$(GOOS= GOARCH= $go run ./cmd/featuretags --min --add=osrouter,portmapper,dns,useexitnode,advertiseexitnode,useroutes,advertiseroutes,unixsocketidentity,iptables,lazywg,cli)"
+    	;;
+    --small)
+		# --small is a smaller binary but still works with core features for low-spec devices.
+		echo "--small (small binary)"
+		shift
+		ldflags="$ldflags -w -s"
+    	tags="${tags:+$tags,}$(GOOS= GOARCH= $go run ./cmd/featuretags --min --add=osrouter,portmapper,dns,useexitnode,advertiseexitnode,useroutes,advertiseroutes,unixsocketidentity,iptables,lazywg)"
+    	;;
 	--extra-small)
-		if [ ! -z "${TAGS:-}" ]; then
-			echo "set either --extra-small or \$TAGS, but not both"
-			exit 1
-		fi
+		# --extra-small is a very basic binary that can still route traffic.
 		shift
 		ldflags="$ldflags -w -s"
 		tags="${tags:+$tags,}$(GOOS= GOARCH= $go run ./cmd/featuretags --min --add=osrouter)"
 		;;
 	--min)
-	    # --min is like --extra-small but even smaller, removing all features,
-		# even if it results in a useless binary (e.g. removing both netstack +
-		# osrouter). It exists for benchmarking purposes only.
+	    # --min removes all features even if it results in a useless binary.
 		shift
 		ldflags="$ldflags -w -s"
 		tags="${tags:+$tags,}$(GOOS= GOARCH= $go run ./cmd/featuretags --min)"
 		;;
 	--box)
-		if [ ! -z "${TAGS:-}" ]; then
-			echo "set either --box or \$TAGS, but not both"
-			exit 1
-		fi
 		shift
 		tags="${tags:+$tags,}ts_include_cli"
 		;;
@@ -76,6 +72,6 @@ while [ "$#" -gt 1 ]; do
 	esac
 done
 
-echo $tags
+echo Build Tags: $tags
 
 exec $go build ${tags:+-tags=$tags} -trimpath -ldflags "$ldflags" "$@"

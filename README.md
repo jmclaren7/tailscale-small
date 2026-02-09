@@ -4,7 +4,7 @@ Automatically builds [Tailscale](https://github.com/tailscale/tailscale) binarie
 
 ## What is this?
 
-This repository automatically builds `tailscale` and `tailscaled` binaries from the official Tailscale repository using the custom `build_custom.sh` script from this repository. The custom flags are called using a new `--small` build script option.
+This repository automatically builds `tailscale` and `tailscaled` binaries from the official Tailscale repository using the custom `build_custom.sh` script from this repository. The custom flags are called using a new `--small` and `--smallaio` build script option.
 
 Using the --extra-small build script option caused problems on OpenWRT devices, this project aims to provide binaries that will work without modifying typical OpenWRT devices running on the supported platforms below.
 
@@ -33,6 +33,7 @@ You can manually use this build script:
 1. Clone tailscale/tailscale and copy build_custom.sh from this repository
 2. `GOOS=linux GOARCH=arm64 ./build_custom.sh --small ./cmd/tailscale`
 3. `GOOS=linux GOARCH=arm64 ./build_custom.sh --small ./cmd/tailscaled`
+4. Optionally: `GOOS=linux GOARCH=arm64 ./build_custom.sh --small ./cmd/tailscaled-aio`
 
 ## License
 
