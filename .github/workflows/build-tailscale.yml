@@ -1,9 +1,9 @@
 name: Build Tailscale Small
 
 on:
-  # Run every 6 hours to check for new releases
+  # Run every 12 hours to check for new releases
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '0 */12 * * *'
   # Allow manual triggering
   workflow_dispatch:
     inputs:
