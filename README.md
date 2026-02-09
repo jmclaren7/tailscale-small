@@ -10,10 +10,10 @@ Using the --extra-small option in the tailscale build script can cause problems,
 - **linux/arm64** - ARM64/aarch64 Linux systems  
 - **linux/ramips** - MIPS little-endian (commonly used in routers / OpenWRT)
 
-## Tailscald-AIO
-Some devices (like OpenWRT) are space constrained, memory constrained or both. For memory constrained systems you might prefer the seperate `tailscale` and `tailscald` binaries. 
+## Tailscaled-AIO
+Some devices (like OpenWRT) are space constrained, memory constrained or both. For memory constrained systems you might prefer the seperate `tailscale` and `tailscaled` binaries. 
 
-For space constrained systems you'll want to use `tailscald-aio`. Rename it to `tailscaled` and then create a symlink to it named `tailscale`, using the symlink will cause `tailscaled` to behave like `tailscale`.
+For space constrained systems you'll want to use `tailscaled-aio`. Rename it to `tailscaled` and then create a symlink to it named `tailscale`, using the symlink will cause `tailscaled` to behave like `tailscale`.
 
 ## Releases
 
