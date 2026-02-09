@@ -29,21 +29,22 @@ EOF
 fi
 
 tags="${TAGS:-}"
-ldflags="X tailscale.com/version.longStamp=${VERSION_LONG} -X tailscale.com/version.shortStamp=${VERSION_SHORT}"
+ldflags="-X tailscale.com/version.longStamp=${VERSION_LONG} -X tailscale.com/version.shortStamp=${VERSION_SHORT}"
 
 # build_dist.sh arguments must precede go build arguments.
 while [ "$#" -gt 1 ]; do
 	case "$1" in
-    --small)
-	# --small is a smaller binary but still works on OpenWRT.
-  	if [ ! -z "${TAGS:-}" ]; then
+    	--small)
+		# --small is a smaller binary but still works on OpenWRT.
+		echo --small Custom, small binary.
+  		if [ ! -z "${TAGS:-}" ]; then
 			echo "set either --small or \$TAGS, but not both"
 			exit 1
 		fi
 		shift
 		ldflags="$ldflags -w -s"
-    tags="${tags:+$tags,},$(GOOS= GOARCH= $go run ./cmd/featuretags --min --add=osrouter,osusergo,netgo | sed -e 's/ts_omit_iptables,//g' -e 's/ts_omit_unixsocketidentity,//g')"
-    ;;
+    		tags="${tags:+$tags,}$(GOOS= GOARCH= $go run ./cmd/featuretags --min --add=osrouter,osusergo,netgo | sed -e 's/ts_omit_iptables,//g' -e 's/ts_omit_unixsocketidentity,//g')"
+    		;;
 	--extra-small)
 		if [ ! -z "${TAGS:-}" ]; then
 			echo "set either --extra-small or \$TAGS, but not both"
@@ -51,7 +52,7 @@ while [ "$#" -gt 1 ]; do
 		fi
 		shift
 		ldflags="$ldflags -w -s"
-		tags="${tags:+$tags,},$(GOOS= GOARCH= $go run ./cmd/featuretags --min --add=osrouter)"
+		tags="${tags:+$tags,}$(GOOS= GOARCH= $go run ./cmd/featuretags --min --add=osrouter)"
 		;;
 	--min)
 	    # --min is like --extra-small but even smaller, removing all features,
@@ -59,7 +60,7 @@ while [ "$#" -gt 1 ]; do
 		# osrouter). It exists for benchmarking purposes only.
 		shift
 		ldflags="$ldflags -w -s"
-		tags="${tags:+$tags,},$(GOOS= GOARCH= $go run ./cmd/featuretags --min)"
+		tags="${tags:+$tags,}$(GOOS= GOARCH= $go run ./cmd/featuretags --min)"
 		;;
 	--box)
 		if [ ! -z "${TAGS:-}" ]; then
@@ -74,5 +75,7 @@ while [ "$#" -gt 1 ]; do
 		;;
 	esac
 done
+
+echo $tags
 
 exec $go build ${tags:+-tags=$tags} -trimpath -ldflags "$ldflags" "$@"
