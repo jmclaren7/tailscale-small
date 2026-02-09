@@ -34,7 +34,8 @@ ldflags="X tailscale.com/version.longStamp=${VERSION_LONG} -X tailscale.com/vers
 # build_dist.sh arguments must precede go build arguments.
 while [ "$#" -gt 1 ]; do
 	case "$1" in
-  --small)
+    --small)
+	# --small is a smaller binary but still works on OpenWRT.
   	if [ ! -z "${TAGS:-}" ]; then
 			echo "set either --small or \$TAGS, but not both"
 			exit 1
