@@ -73,21 +73,28 @@ jobs:
         with:
           go-version: 'stable'
 
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
       - name: Checkout Tailscale
         uses: actions/checkout@v4
         with:
           repository: tailscale/tailscale
           ref: ${{ needs.check-release.outputs.tag }}
+          path: tailscale
 
       - name: Build tailscaled
+        working-directory: tailscale
         run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} ./build_dist.sh --small tailscale.com/cmd/tailscaled
-          mv tailscaled tailscaled-${{ matrix.name }}
+          cp ../build_custom.sh .
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} ./build_custom.sh --small tailscale.com/cmd/tailscaled
+          mv tailscaled ../tailscaled-${{ matrix.name }}
 
       - name: Build tailscale
+        working-directory: tailscale
         run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} ./build_dist.sh --small tailscale.com/cmd/tailscale
-          mv tailscale tailscale-${{ matrix.name }}
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} ./build_custom.sh --small tailscale.com/cmd/tailscale
+          mv tailscale ../tailscale-${{ matrix.name }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
