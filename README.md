@@ -6,9 +6,9 @@ Automatically builds [Tailscale](https://github.com/tailscale/tailscale) binarie
 
 This repository automatically builds `tailscale` and `tailscaled` binaries from the official Tailscale repository using the custom `build_custom.sh` script from this repository. The custom flags are called using a new `--small` and `--smallaio` build script option.
 
-Using the --extra-small build script option caused problems on OpenWRT devices, this project aims to provide binaries that will work without modifying typical OpenWRT devices running on the supported platforms below.
+Using the --extra-small option in the tailscale build script can cause problems, this project aims to provide binaries that will work as easily as the full size ones.
 
-Some open WRT devices are space constrained, memory constrained or both, the current builds available here focus on reducing memory usage and therefor `tailscale` and `tailscald` are separate binaries. Eventually I plan to build a combined binary for each platform along with a install script to help with linking on OpenWRT.
+Some OpenWRT devices are space constrained, memory constrained or both. For memory constrained devices you might prefer the seperate `tailscale` and `tailscald` binaries. For space constrained systems you will definitly want to use `tailscald-aio` (name it tailscaled and create a symlink to it named tailscale). 
 
 ## Supported Platforms
 
@@ -22,9 +22,9 @@ New releases are automatically created when Tailscale publishes a new version. T
 
 Each release contains:
 
-- `tailscale-linux-amd64` / `tailscaled-linux-amd64`
-- `tailscale-linux-arm64` / `tailscaled-linux-arm64`
-- `tailscale-linux-ramips` / `tailscaled-linux-ramips`
+- `tailscale-linux-amd64` / `tailscaled-linux-amd64` / `tailscaled-aio-linux-amd64` 
+- `tailscale-linux-arm64` / `tailscaled-linux-arm64` / `tailscaled-aio-linux-arm64`
+- `tailscale-linux-ramips` / `tailscaled-linux-ramips` / `tailscaled-aio-linux-ramips`
 
 ## Manual Build
 
