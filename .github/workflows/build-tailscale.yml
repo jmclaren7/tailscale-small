@@ -87,13 +87,13 @@ jobs:
         working-directory: tailscale
         run: |
           cp ../build_custom.sh .
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} ./build_custom.sh --small tailscale.com/cmd/tailscaled
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} sh ./build_custom.sh --small tailscale.com/cmd/tailscaled
           mv tailscaled ../tailscaled-${{ matrix.name }}
 
       - name: Build tailscale
         working-directory: tailscale
         run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} ./build_custom.sh --small tailscale.com/cmd/tailscale
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} sh ./build_custom.sh --small tailscale.com/cmd/tailscale
           mv tailscale ../tailscale-${{ matrix.name }}
 
       - name: Upload artifacts
