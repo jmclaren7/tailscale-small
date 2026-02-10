@@ -67,6 +67,10 @@ jobs:
           - goos: linux
             goarch: mipsle
             name: linux-mipsle
+          - goos: linux
+            goarch: mips
+            gomips: softfloat
+            name: linux-mips-24kc
     steps:
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -87,19 +91,19 @@ jobs:
         working-directory: tailscale
         run: |
           cp ../build_custom.sh .
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} sh ./build_custom.sh --small tailscale.com/cmd/tailscaled
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOMIPS=${{ matrix.gomips }} sh ./build_custom.sh --small tailscale.com/cmd/tailscaled
           mv tailscaled ../tailscaled-${{ matrix.name }}
 
       - name: Build tailscale
         working-directory: tailscale
         run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} sh ./build_custom.sh --small tailscale.com/cmd/tailscale
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOMIPS=${{ matrix.gomips }} sh ./build_custom.sh --small tailscale.com/cmd/tailscale
           mv tailscale ../tailscale-${{ matrix.name }}
 
       - name: Build tailscaled-aio
         working-directory: tailscale
         run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} sh ./build_custom.sh --smallaio tailscale.com/cmd/tailscaled
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOMIPS=${{ matrix.gomips }} sh ./build_custom.sh --smallaio tailscale.com/cmd/tailscaled
           mv tailscaled ../tailscaled-aio-${{ matrix.name }}
 
       - name: Upload artifacts
@@ -135,7 +139,7 @@ jobs:
           TAG="${{ needs.check-release.outputs.tag }}"
           gh release create "$TAG" \
             --title "Tailscale Small $TAG" \
-            --notes "Tailscale $TAG built with --small and --smallaio flags for linux/amd64, linux/arm64, and linux/mipsle. AIO includes CLI support." \
+            --notes "Tailscale $TAG built with --small and --smallaio flags for linux/amd64, linux/arm64, linux/mipsle, and linux/mips (24kc softfloat). AIO includes CLI support." \
             binaries/*
         env:
           GH_TOKEN: ${{ github.token }}

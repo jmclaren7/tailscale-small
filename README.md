@@ -9,6 +9,7 @@ Using the --extra-small option in the tailscale build script can cause problems,
 - **linux/amd64** - x86-64 Linux systems
 - **linux/arm64** - ARM64/aarch64 Linux systems  
 - **linux/ramips** - MIPS little-endian (commonly used in routers / OpenWRT)
+- **linux/mips_24kc** - MIPS big-endian softfloat (Atheros/Qualcomm routers / OpenWRT)
 
 ## Tailscaled-AIO
 Some devices (like OpenWRT) are space constrained, memory constrained or both. For memory constrained systems you might prefer the seperate `tailscale` and `tailscaled` binaries. 
@@ -24,6 +25,7 @@ Each release contains:
 - `tailscale-linux-amd64` / `tailscaled-linux-amd64` / `tailscaled-aio-linux-amd64` 
 - `tailscale-linux-arm64` / `tailscaled-linux-arm64` / `tailscaled-aio-linux-arm64`
 - `tailscale-linux-ramips` / `tailscaled-linux-ramips` / `tailscaled-aio-linux-ramips`
+- `tailscale-linux-mips-24kc` / `tailscaled-linux-mips-24kc` / `tailscaled-aio-linux-mips-24kc`
 
 ## Manual Build
 
