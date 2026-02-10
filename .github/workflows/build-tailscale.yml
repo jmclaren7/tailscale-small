@@ -77,6 +77,9 @@ jobs:
         with:
           go-version: 'stable'
 
+      - name: Install UPX
+        run: sudo apt-get update && sudo apt-get install -y upx
+
       - name: Checkout this repo
         uses: actions/checkout@v4
 
@@ -92,19 +95,22 @@ jobs:
         run: |
           cp ../build_custom.sh .
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOMIPS=${{ matrix.gomips }} sh ./build_custom.sh --small tailscale.com/cmd/tailscaled
-          mv tailscaled ../tailscaled-${{ matrix.name }}
+          cp tailscaled ../tailscaled-${{ matrix.name }}
+          upx --best -o ../tailscaled-${{ matrix.name }}-upx tailscaled
 
       - name: Build tailscale
         working-directory: tailscale
         run: |
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOMIPS=${{ matrix.gomips }} sh ./build_custom.sh --small tailscale.com/cmd/tailscale
-          mv tailscale ../tailscale-${{ matrix.name }}
+          cp tailscale ../tailscale-${{ matrix.name }}
+          upx --best -o ../tailscale-${{ matrix.name }}-upx tailscale
 
       - name: Build tailscaled-aio
         working-directory: tailscale
         run: |
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOMIPS=${{ matrix.gomips }} sh ./build_custom.sh --smallaio tailscale.com/cmd/tailscaled
-          mv tailscaled ../tailscaled-aio-${{ matrix.name }}
+          cp tailscaled ../tailscaled-aio-${{ matrix.name }}
+          upx --best -o ../tailscaled-aio-${{ matrix.name }}-upx tailscaled
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -114,6 +120,9 @@ jobs:
             tailscaled-${{ matrix.name }}
             tailscale-${{ matrix.name }}
             tailscaled-aio-${{ matrix.name }}
+            tailscaled-${{ matrix.name }}-upx
+            tailscale-${{ matrix.name }}-upx
+            tailscaled-aio-${{ matrix.name }}-upx
 
   release:
     needs: [check-release, build]
@@ -139,7 +148,7 @@ jobs:
           TAG="${{ needs.check-release.outputs.tag }}"
           gh release create "$TAG" \
             --title "Tailscale Small $TAG" \
-            --notes "Tailscale $TAG built with --small and --smallaio flags for linux/amd64, linux/arm64, linux/mipsle, and linux/mips (24kc softfloat). AIO includes CLI support." \
+            --notes "Tailscale $TAG built with --small and --smallaio flags for linux/amd64, linux/arm64, linux/mipsle, and linux/mips (24kc softfloat). AIO includes CLI support. UPX variants compressed with --best." \
             binaries/*
         env:
           GH_TOKEN: ${{ github.token }}
