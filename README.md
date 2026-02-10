@@ -12,9 +12,10 @@ Using the --extra-small option in the tailscale build script can cause problems,
 - **linux/mips_24kc** - MIPS big-endian softfloat (Atheros/Qualcomm routers / OpenWRT)
 
 ## Tailscaled-AIO
-Some devices (like OpenWRT) are space constrained, memory constrained or both. For memory constrained systems you might prefer the seperate `tailscale` and `tailscaled` binaries. 
+Some devices (like OpenWRT) are limited by storage, memory or both
 
-For space constrained systems you'll want to use `tailscaled-aio`. Rename it to `tailscaled` and then create a symlink to it named `tailscale`, using the symlink will cause `tailscaled` to behave like `tailscale`.
+* For memory constrained systems, try the eperate `tailscale-*` and `tailscaled-*` binaries that are not compressed (*-upx). 
+* For space constrained systems, try `tailscaled-aio-*-upx`. Rename it to `tailscaled` and then create a symlink to it named `tailscale`, using the symlink will cause `tailscaled` to behave like `tailscale`.
 
 ## Releases
 
