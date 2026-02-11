@@ -1,32 +1,28 @@
 # Tailscale-Small
 
-This repository automatically builds [Tailscale](https://github.com/tailscale/tailscale) binaries from the official Tailscale repository using the custom `build_custom.sh` script from this repository. New flags are called (`--small` and `--smallaio`) to create reduced size binaries, usefull for low-spec devices devices.
+This repository automatically builds [Tailscale](https://github.com/tailscale/tailscale) using the custom `build_custom.sh`. The script uses a set chosen set of build flags to reduce the size of tailscale for low spec devices (like OpenWRT) which are limited by storage, memory or both.
 
-Using the --extra-small option in the tailscale build script can cause problems, this project aims to provide binaries that will work as easily as the full size ones. 
+Using the --extra-small option in the tailscale build script can cause problems, this project aims to provide binaries that will work as easily as the full size ones and with all the core features. 
 
-## Supported Platforms
+## Platforms
 
-- **linux/amd64** - x86-64 Linux systems
-- **linux/arm64** - ARM64/aarch64 Linux systems  
-- **linux/ramips** - MIPS little-endian (commonly used in routers / OpenWRT)
-- **linux/mips_24kc** - MIPS big-endian softfloat (Atheros/Qualcomm routers / OpenWRT)
+- **linux-amd64** - x86-64 Linux systems
+- **linux-arm64** - ARM64/aarch64 Linux systems  
+- **linux-ramips** - MIPS little-endian (commonly used in routers / OpenWRT)
+- **linux-mips-24kc** - MIPS big-endian softfloat (Atheros/Qualcomm routers / OpenWRT)
 
-## Tailscaled-AIO
-Some devices (like OpenWRT) are limited by storage, memory or both
+## Variations
 
-* For memory constrained systems, try the eperate `tailscale-*` and `tailscaled-*` binaries that are not compressed (*-upx). 
-* For space constrained systems, try `tailscaled-aio-*-upx`. Rename it to `tailscaled` and then create a symlink to it named `tailscale`, using the symlink will cause `tailscaled` to behave like `tailscale`.
+- Reduced Features Only: Best for memory constrained systems, try the seperate `tailscale` and `tailscaled` binaries. 
+- Reduced Features & Combined/AIO: Best for space constrained systems, try `tailscaled-aio`. Rename it to `tailscaled` and then create a symlink named `tailscale`.
+- Compressed: The two variations above also have compressed (UPX) versions available with `*-upx` in the name.
 
-## Releases
+## Build Script
 
-New releases are automatically created when Tailscale publishes a new version. The workflow checks for new releases every 12 hours and builds the binaries automatically.
+The new flags are:
 
-Each release contains:
-
-- `tailscale-linux-amd64` / `tailscaled-linux-amd64` / `tailscaled-aio-linux-amd64` 
-- `tailscale-linux-arm64` / `tailscaled-linux-arm64` / `tailscaled-aio-linux-arm64`
-- `tailscale-linux-ramips` / `tailscaled-linux-ramips` / `tailscaled-aio-linux-ramips`
-- `tailscale-linux-mips-24kc` / `tailscaled-linux-mips-24kc` / `tailscaled-aio-linux-mips-24kc`
+- `--small` reduced size, seperate binaries
+- `--smallaio` same as --small but with the client CLI added to `tailscaled` (requires symlink)
 
 ## Manual Build
 
@@ -35,7 +31,7 @@ You can manually use this build script:
 1. Clone tailscale/tailscale and copy build_custom.sh from this repository
 2. `GOOS=linux GOARCH=arm64 ./build_custom.sh --small ./cmd/tailscale`
 3. `GOOS=linux GOARCH=arm64 ./build_custom.sh --small ./cmd/tailscaled`
-4. Optionally: `GOOS=linux GOARCH=arm64 ./build_custom.sh --small ./cmd/tailscaled-aio`
+4. Or the combined version: `GOOS=linux GOARCH=arm64 ./build_custom.sh --small ./cmd/tailscaled-aio`
 
 ## License
 
