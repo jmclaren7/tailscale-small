@@ -41,14 +41,14 @@ while [ "$#" -gt 1 ]; do
 		echo "--smallaio (small AIO binary with CLI support)"
 		shift
 		ldflags="$ldflags -w -s"
-    	tags="${tags:+$tags,}$(GOOS= GOARCH= $go run ./cmd/featuretags --min --add=osrouter,portmapper,dns,useexitnode,advertiseexitnode,useroutes,advertiseroutes,unixsocketidentity,iptables,lazywg,cli)"
+    	tags="${tags:+$tags,}$(GOOS= GOARCH= $go run ./cmd/featuretags --min --add=osrouter,portmapper,dns,useexitnode,advertiseexitnode,useroutes,advertiseroutes,unixsocketidentity,iptables,lazywg,listenrawdisco,cli)"
     	;;
     --small)
 		# --small is a smaller binary but still works with core features for low-spec devices.
 		echo "--small (small binary)"
 		shift
 		ldflags="$ldflags -w -s"
-    	tags="${tags:+$tags,}$(GOOS= GOARCH= $go run ./cmd/featuretags --min --add=osrouter,portmapper,dns,useexitnode,advertiseexitnode,useroutes,advertiseroutes,unixsocketidentity,iptables,lazywg)"
+    	tags="${tags:+$tags,}$(GOOS= GOARCH= $go run ./cmd/featuretags --min --add=osrouter,portmapper,dns,useexitnode,advertiseexitnode,useroutes,advertiseroutes,unixsocketidentity,iptables,lazywg,listenrawdisco)"
     	;;
 	--extra-small)
 		# --extra-small is a very basic binary that can still route traffic.
