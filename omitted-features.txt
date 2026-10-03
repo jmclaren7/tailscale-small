@@ -16,12 +16,13 @@
 aws                 # AWS integration
 bird                # Bird BGP integration
 cloud               # cloud environment detection
-dbus                # Linux DBus (no DBus on OpenWrt)
+dbus                # Linux DBus (no DBus on OpenWrt); needed by resolved and networkmanager
 desktop_sessions    # desktop sessions
 flashappliance      # appliance image deployment CLI commands
 kube                # Kubernetes integration
-networkmanager      # NetworkManager integration
-resolved            # systemd-resolved integration
+networkmanager      # NetworkManager DNS; without it tailscaled won't start where NetworkManager manages /etc/resolv.conf
+resolved            # systemd-resolved DNS; without it tailscaled won't start where systemd-resolved manages /etc/resolv.conf
+                    # (adding resolved + networkmanager: ~360-450 KB / ~120-140 KB)
 sdnotify            # systemd notification
 serviceclientprefs  # desktop client service launch preferences
 synology            # Synology NAS integration

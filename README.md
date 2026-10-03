@@ -52,6 +52,8 @@ Notes:
 
 Everything else is left out on purpose. [omitted-features.txt](omitted-features.txt) lists each omitted feature with a short reason and approximate size.
 
+The binaries are statically linked, so they also run on musl systems like OpenWrt. They support the `direct`, `resolvconf` and `openresolv` ways of managing `/etc/resolv.conf`, which covers OpenWrt and most embedded systems. They don't include systemd-resolved or NetworkManager support, so `tailscaled` fails to start on hosts where one of those manages `/etc/resolv.conf`, such as a default Ubuntu or Fedora install. Use the official Tailscale packages there.
+
 Because the build starts from "nothing", any feature that Tailscale splits out in a future release is dropped automatically. That is what happened in v1.98, when `ipnbus` became optional and `tailscale up` silently stopped working. To prevent a repeat, the workflow:
 
 - fails if a release would omit a feature that isn't listed in `omitted-features.txt` (`scripts/check-features.sh`);

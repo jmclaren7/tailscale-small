@@ -47,6 +47,10 @@ docker run --rm -v "$work:/work" "$alpine_image" sh -euc '
 	chmod 0644 /work/kmod-tun.apk
 '
 
+# An OpenWrt-style resolv.conf, so the result doesn't depend on how Docker
+# copies the host's (tailscaled can't start if it looks like systemd-resolved's).
+printf 'search lan\nnameserver 127.0.0.1\n' > "$work/resolv.conf"
+
 mkdir -p "$work/pkgs"
 cp "$pkgdir"/*_"$pkgver"_x86_64.* "$work/kmod-tun.ipk" "$work/kmod-tun.apk" "$work/pkgs/"
 sh "$here/build-packages.sh" tailscale-small "$version" mipsel 'mipsel_*' "$binary" "$work/pkgs" > /dev/null
@@ -56,6 +60,7 @@ for fmt in ipk apk; do
 	[ "$fmt" = ipk ] || image=$apk_image
 	echo "=== $fmt on $image"
 	docker run --rm --cap-add=NET_ADMIN --device=/dev/net/tun \
+		-v "$work/resolv.conf:/etc/resolv.conf" \
 		-v "$work/pkgs:/pkgs:ro" -v "$scripts:/scripts:ro" -v "$here:/test:ro" \
 		"$image" sh /test/test-install.sh "$fmt" "$pkgver"
 done

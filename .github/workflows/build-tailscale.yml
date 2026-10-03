@@ -109,6 +109,8 @@ jobs:
     # Pinned for the apt package names (upx, qemu-user-static).
     runs-on: ubuntu-24.04
     strategy:
+      # Report every architecture; the release still needs all of them.
+      fail-fast: false
       matrix:
         include:
           - name: linux-amd64
@@ -205,14 +207,23 @@ jobs:
       - name: Smoke test tailscale up
         if: matrix.goarch == 'amd64'
         run: |
+          # The runner's /etc/resolv.conf is managed by systemd-resolved, which
+          # the small builds don't support, so tailscaled would fail to start.
+          # Give it a plain resolv.conf, as on OpenWrt, in a private mount
+          # namespace.
+          printf 'nameserver 127.0.0.53\n' > "$RUNNER_TEMP/resolv.conf"
+          smoke() {
+            sudo unshare --mount sh -c 'mount --bind "$1" /etc/resolv.conf && exec sh scripts/smoke-test.sh "$2" "$3"' \
+              sh "$RUNNER_TEMP/resolv.conf" "$1" "$2"
+          }
           # The AIO binary acts as the CLI when it is run as "tailscale".
           aio="$RUNNER_TEMP/aio"
           mkdir -p "$aio"
           for suffix in "" "-upx"; do
-            sudo sh scripts/smoke-test.sh "dist/tailscaled-$NAME$suffix" "dist/tailscale-$NAME$suffix"
+            smoke "dist/tailscaled-$NAME$suffix" "dist/tailscale-$NAME$suffix"
             ln -sf "$PWD/dist/tailscaled-aio-$NAME$suffix" "$aio/tailscaled"
             ln -sf tailscaled "$aio/tailscale"
-            sudo sh scripts/smoke-test.sh "$aio/tailscaled" "$aio/tailscale"
+            smoke "$aio/tailscaled" "$aio/tailscale"
           done
 
       - name: Build OpenWrt packages
