@@ -93,4 +93,8 @@ done
 
 echo Build Tags: $tags
 
+# Build static binaries. With cgo, a native build on a glibc host links
+# against glibc and fails with "not found" on musl systems such as OpenWrt.
+export CGO_ENABLED="${CGO_ENABLED:-0}"
+
 exec $go build ${tags:+-tags=$tags} -trimpath -ldflags "$ldflags" "$@"
