@@ -1,0 +1,88 @@
+# Tailscale features deliberately left out of the --small / --smallaio builds.
+#
+# build_custom.sh keeps only SMALL_FEATURES and omits everything else, which
+# includes features that Tailscale adds in future releases. CI runs
+# scripts/check-features.sh and fails when a release would omit a feature
+# that is not listed here, so new features get reviewed instead of silently
+# disappearing (that is how `tailscale up` broke when v1.98 split out ipnbus).
+#
+# To resolve a failure: add the feature to SMALL_FEATURES in build_custom.sh
+# if the binary needs it, otherwise list it here with a short reason.
+# List all features with: go run ./cmd/featuretags --list
+#
+# Size notes are approximate, measured on linux/mipsle (on disk / gzipped).
+
+# Cloud, desktop and platform integrations that don't apply to routers
+aws                 # AWS integration
+bird                # Bird BGP integration
+cloud               # cloud environment detection
+dbus                # Linux DBus (no DBus on OpenWrt)
+desktop_sessions    # desktop sessions
+flashappliance      # appliance image deployment CLI commands
+kube                # Kubernetes integration
+networkmanager      # NetworkManager integration
+resolved            # systemd-resolved integration
+sdnotify            # systemd notification
+serviceclientprefs  # desktop client service launch preferences
+synology            # Synology NAS integration
+syspolicy           # MDM system policy
+systray             # Linux system tray
+tpm                 # TPM support
+webbrowser          # opening URLs in a browser
+
+# Larger features most router installs don't need
+ace                 # Alternate Connectivity Endpoints
+acme                # `tailscale cert` (ACME TLS certificates)
+appconnectors       # App Connectors
+capture             # packet capture
+conn25              # domain routing through connector devices
+drive               # Tailscale Drive file server
+netstack            # gVisor userspace networking; needs kmod-tun instead (several MB)
+outboundproxy       # local HTTP/SOCKS5 proxy (requires netstack)
+serve               # Serve and Funnel (requires netstack)
+ssh                 # Tailscale SSH (requires netstack)
+taildrop            # Taildrop file sending
+tailnetlock         # Tailnet Lock (~960 KB / ~300 KB)
+tap                 # experimental layer 2
+webclient           # web client UI (requires serve)
+
+# Optional or nice-to-have features, cheap to add if wanted
+cachenetmap         # cache the netmap on disk between runs (~64 KB / ~16 KB)
+captiveportal       # captive portal detection
+cliconndiag         # CLI connection error diagnostics (~0 KB / ~5 KB)
+health              # health warnings in `tailscale status` (~128 KB / ~28 KB)
+hujsonconf          # `tailscaled --config` file support
+identityfederation  # auth keys via workload identity federation
+oauthkey            # OAuth client secrets as auth keys (~64 KB / ~20 KB)
+posture             # device posture checks
+qrcodes             # `tailscale up --qr`
+relayserver         # acting as a peer relay (~256 KB / ~67 KB)
+remoteconfig        # full remote configuration by tailnet admins
+routecheck          # reachability checks for overlapping subnet routers
+useproxy            # reaching Tailscale through a system HTTP proxy (~256 KB / ~53 KB)
+wakeonlan           # Wake-on-LAN
+
+# Metrics, logging and debugging
+clientmetrics       # client metrics
+debug               # assorted debug support
+debugeventbus       # eventbus debugging
+debugportmapper     # portmapper debugging
+doctor              # `tailscale debug doctor`
+logtail             # uploading logs to log.tailscale.com
+netlog              # network flow logging
+runtimemetrics      # Go runtime metrics
+syslog              # `tailscaled --syslog` (OpenWrt's procd captures stdout/stderr)
+usermetrics         # user metrics endpoint
+
+# Performance and OS integration extras
+gro                 # Generic Receive Offload (requires netstack)
+linkspeed           # TUN link speed reporting
+linuxdnsfight       # /etc/resolv.conf fight detection
+tundevstats         # TUN device statistics
+
+# CLI conveniences
+clientupdate        # `tailscale update` (unsupported on OpenWrt)
+colorable           # colored terminal output
+completion          # shell completion
+completion_scripts  # embedded shell completion scripts
+portlist            # advertising listening service ports

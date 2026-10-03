@@ -8,147 +8,268 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tailscale version tag (e.g., v1.94.1)'
+        description: 'Tailscale version tag (e.g., v1.102.5); defaults to the latest release'
         required: false
         type: string
+  # Build and test changes to the build without releasing anything
+  pull_request:
+    paths:
+      - build_custom.sh
+      - omitted-features.txt
+      - openwrt/**
+      - scripts/**
+      - .github/release-notes.md
+      - .github/workflows/build-tailscale.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || 'release' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check-release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     outputs:
       tag: ${{ steps.get-tag.outputs.tag }}
+      version: ${{ steps.get-tag.outputs.version }}
       should-build: ${{ steps.check.outputs.should-build }}
     steps:
-      - uses: actions/checkout@v4
-
       - name: Get latest release tag
         id: get-tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          if [ -n "${{ inputs.tag }}" ]; then
-            TAG="${{ inputs.tag }}"
-          else
-            TAG=$(curl -s https://api.github.com/repos/tailscale/tailscale/releases/latest | jq -r .tag_name)
+          TAG="$INPUT_TAG"
+          if [ -z "$TAG" ]; then
+            # Authenticated and retried: an unauthenticated lookup once got an
+            # error response, and its missing tag_name came back as "null".
+            for attempt in 1 2 3; do
+              TAG=$(gh api repos/tailscale/tailscale/releases/latest --jq .tag_name) && break
+              sleep $((attempt * 15))
+            done
           fi
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Could not determine a valid Tailscale release tag (got '$TAG')"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
           echo "Latest tag: $TAG"
 
       - name: Check if already built
         id: check
-        run: |
-          TAG="${{ steps.get-tag.outputs.tag }}"
-          # Check if this tag already exists in our releases
-          if gh release view "$TAG" --repo ${{ github.repository }} >/dev/null 2>&1; then
-            echo "Release $TAG already exists"
-            echo "should-build=false" >> $GITHUB_OUTPUT
-          else
-            echo "Release $TAG does not exist, will build"
-            echo "should-build=true" >> $GITHUB_OUTPUT
-          fi
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.get-tag.outputs.tag }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            echo "Pull request: build and test $TAG without releasing"
+            echo "should-build=true" >> "$GITHUB_OUTPUT"
+          elif out=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq .id 2>&1); then
+            echo "Release $TAG already exists"
+            echo "should-build=false" >> "$GITHUB_OUTPUT"
+          elif printf '%s' "$out" | grep -q "HTTP 404"; then
+            echo "Release $TAG does not exist, will build"
+            echo "should-build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Could not check for an existing release: $out"
+            exit 1
+          fi
 
-  build:
+  check-features:
     needs: check-release
     if: needs.check-release.outputs.should-build == 'true'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    strategy:
-      matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-            name: linux-amd64
-          - goos: linux
-            goarch: arm64
-            name: linux-arm64
-          - goos: linux
-            goarch: mipsle
-            name: linux-mipsle
-          - goos: linux
-            goarch: mips
-            gomips: softfloat
-            name: linux-mips-24kc
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 'stable'
-
-      - name: Install UPX
-        run: sudo apt-get update && sudo apt-get install -y upx
-
       - name: Checkout this repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Checkout Tailscale
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: tailscale/tailscale
           ref: ${{ needs.check-release.outputs.tag }}
           path: tailscale
 
-      - name: Build tailscaled
-        working-directory: tailscale
-        run: |
-          cp ../build_custom.sh .
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOMIPS=${{ matrix.gomips }} sh ./build_custom.sh --small tailscale.com/cmd/tailscaled
-          cp tailscaled ../tailscaled-${{ matrix.name }}
-          upx --best -o ../tailscaled-${{ matrix.name }}-upx tailscaled
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: tailscale/go.mod
+          cache-dependency-path: tailscale/go.sum
 
-      - name: Build tailscale
+      - name: Check for unreviewed Tailscale features
         working-directory: tailscale
-        run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOMIPS=${{ matrix.gomips }} sh ./build_custom.sh --small tailscale.com/cmd/tailscale
-          cp tailscale ../tailscale-${{ matrix.name }}
-          upx --best -o ../tailscale-${{ matrix.name }}-upx tailscale
+        run: sh ../scripts/check-features.sh ../build_custom.sh ../omitted-features.txt
 
-      - name: Build tailscaled-aio
+  build:
+    needs: [check-release, check-features]
+    # Pinned for the apt package names (upx, qemu-user-static).
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - name: linux-amd64
+            goarch: amd64
+            openwrt_arch: x86_64
+            openwrt_glob: x86_64
+          - name: linux-arm64
+            goarch: arm64
+            qemu: qemu-aarch64-static
+            openwrt_arch: aarch64
+            openwrt_glob: aarch64_*
+          - name: linux-armv7
+            goarch: arm
+            # softfloat also runs on ARMv7 chips without an FPU (e.g. bcm53xx)
+            goarm: '7,softfloat'
+            qemu: qemu-arm-static
+            openwrt_arch: armv7
+            openwrt_glob: arm_cortex-a*
+          - name: linux-mipsle
+            goarch: mipsle
+            # ramips (MT7621, MT76x8) and most MIPS router SoCs have no FPU
+            gomips: softfloat
+            qemu: qemu-mipsel-static
+            openwrt_arch: mipsel
+            openwrt_glob: mipsel_*
+          - name: linux-mips-24kc
+            goarch: mips
+            gomips: softfloat
+            qemu: qemu-mips-static
+            openwrt_arch: mips
+            openwrt_glob: mips_*
+    env:
+      GOOS: linux
+      GOARCH: ${{ matrix.goarch }}
+      GOARM: ${{ matrix.goarm }}
+      GOMIPS: ${{ matrix.gomips }}
+      NAME: ${{ matrix.name }}
+      VERSION: ${{ needs.check-release.outputs.version }}
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v7
+
+      - name: Checkout Tailscale
+        uses: actions/checkout@v7
+        with:
+          repository: tailscale/tailscale
+          ref: ${{ needs.check-release.outputs.tag }}
+          path: tailscale
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: tailscale/go.mod
+          cache-dependency-path: tailscale/go.sum
+
+      - name: Install UPX and QEMU
+        run: sudo apt-get update && sudo apt-get install -y upx qemu-user-static
+
+      - name: Build binaries
         working-directory: tailscale
         run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOMIPS=${{ matrix.gomips }} sh ./build_custom.sh --smallaio tailscale.com/cmd/tailscaled
-          cp tailscaled ../tailscaled-aio-${{ matrix.name }}
-          upx --best -o ../tailscaled-aio-${{ matrix.name }}-upx tailscaled
+          mkdir -p ../dist
+          sh ../build_custom.sh --small -o "../dist/tailscaled-$NAME" ./cmd/tailscaled
+          sh ../build_custom.sh --small -o "../dist/tailscale-$NAME" ./cmd/tailscale
+          sh ../build_custom.sh --smallaio -o "../dist/tailscaled-aio-$NAME" ./cmd/tailscaled
+          for f in "tailscaled-$NAME" "tailscale-$NAME" "tailscaled-aio-$NAME"; do
+            upx --best -o "../dist/$f-upx" "../dist/$f"
+          done
+          ls -l ../dist
+
+      - name: Check the binaries run
+        env:
+          QEMU: ${{ matrix.qemu }}
+        run: |
+          cli="$RUNNER_TEMP/cli"
+          mkdir -p "$cli"
+          for f in dist/*; do
+            echo "== $f"
+            case "$f" in
+            dist/tailscale-*)
+              $QEMU "$f" version
+              ;;
+            dist/tailscaled-aio-*)
+              $QEMU "$f" --version
+              ln -sf "$PWD/$f" "$cli/tailscale"
+              $QEMU "$cli/tailscale" version
+              ;;
+            *)
+              $QEMU "$f" --version
+              ;;
+            esac
+          done
+
+      - name: Smoke test tailscale up
+        if: matrix.goarch == 'amd64'
+        run: |
+          # The AIO binary acts as the CLI when it is run as "tailscale".
+          aio="$RUNNER_TEMP/aio"
+          mkdir -p "$aio"
+          for suffix in "" "-upx"; do
+            sudo sh scripts/smoke-test.sh "dist/tailscaled-$NAME$suffix" "dist/tailscale-$NAME$suffix"
+            ln -sf "$PWD/dist/tailscaled-aio-$NAME$suffix" "$aio/tailscaled"
+            ln -sf tailscaled "$aio/tailscale"
+            sudo sh scripts/smoke-test.sh "$aio/tailscaled" "$aio/tailscale"
+          done
+
+      - name: Build OpenWrt packages
+        env:
+          OPENWRT_ARCH: ${{ matrix.openwrt_arch }}
+          OPENWRT_GLOB: ${{ matrix.openwrt_glob }}
+        run: |
+          SOURCE_DATE_EPOCH=$(git -C tailscale log -1 --format=%ct)
+          export SOURCE_DATE_EPOCH
+          sh openwrt/build-packages.sh tailscale-small "$VERSION" "$OPENWRT_ARCH" "$OPENWRT_GLOB" "dist/tailscaled-aio-$NAME" packages
+          sh openwrt/build-packages.sh tailscale-small-upx "$VERSION" "$OPENWRT_ARCH" "$OPENWRT_GLOB" "dist/tailscaled-aio-$NAME-upx" packages
+
+      - name: Test OpenWrt packages
+        if: matrix.goarch == 'amd64'
+        run: sh openwrt/test-packages.sh packages "$VERSION" "dist/tailscaled-aio-$NAME"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: binaries-${{ matrix.name }}
           path: |
-            tailscaled-${{ matrix.name }}
-            tailscale-${{ matrix.name }}
-            tailscaled-aio-${{ matrix.name }}
-            tailscaled-${{ matrix.name }}-upx
-            tailscale-${{ matrix.name }}-upx
-            tailscaled-aio-${{ matrix.name }}-upx
+            dist/*
+            packages/*
+          if-no-files-found: error
 
   release:
     needs: [check-release, build]
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout this repo
+        uses: actions/checkout@v7
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 
-      - name: Organize binaries
+      - name: Organize release files
         run: |
-          mkdir -p binaries
-          find artifacts -type f -exec mv {} binaries/ \;
-          ls -lah binaries/
+          mkdir -p release
+          find artifacts -type f -exec mv {} release/ \;
+          (cd release && sha256sum -- * > SHA256SUMS)
+          ls -lah release/
 
       - name: Create Release
-        run: |
-          TAG="${{ needs.check-release.outputs.tag }}"
-          gh release create "$TAG" \
-            --title "Tailscale Small $TAG" \
-            --notes "Tailscale $TAG built with --small and --smallaio flags for linux/amd64, linux/arm64, linux/mipsle, and linux/mips (24kc softfloat). AIO includes CLI support. UPX variants compressed with --best." \
-            binaries/*
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.check-release.outputs.tag }}
+          VERSION: ${{ needs.check-release.outputs.version }}
+        run: |
+          sed -e "s|\${TAG}|$TAG|g" -e "s|\${VERSION}|$VERSION|g" -e "s|\${REPOSITORY}|$GITHUB_REPOSITORY|g" \
+            .github/release-notes.md > "$RUNNER_TEMP/notes.md"
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Tailscale Small $TAG" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            release/*
