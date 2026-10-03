@@ -13,3 +13,9 @@ go.sum
 # Temporary files
 *.tmp
 *.log
+
+# Release and package outputs
+dist/
+packages/
+*.ipk
+*.apk
