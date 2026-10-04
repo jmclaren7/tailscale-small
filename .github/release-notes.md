@@ -22,7 +22,7 @@ Find your device's architecture with `grep DISTRIB_ARCH /etc/openwrt_release`, t
 For `linux-amd64`, `linux-arm64`, `linux-armv7`, `linux-mipsle` and `linux-mips-24kc` (MIPS builds are softfloat):
 
 - `tailscaled-*` and `tailscale-*`: separate daemon and CLI, best for low-RAM devices.
-- `tailscaled-aio-*`: the daemon with the CLI built in, best for low-storage devices. Rename it to `tailscaled` and create a symlink named `tailscale` pointing to it.
+- `tailscaled-*-aio`: the daemon with the CLI built in, best for low-storage devices. Rename it to `tailscaled` and create a symlink named `tailscale` pointing to it.
 - `*-upx`: UPX-compressed versions of the above.
 
 Checksums are in `SHA256SUMS`.

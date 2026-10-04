@@ -148,6 +148,8 @@ jobs:
       GOARM: ${{ matrix.goarm }}
       GOMIPS: ${{ matrix.gomips }}
       NAME: ${{ matrix.name }}
+      # The combined daemon + CLI binary; the UPX copy adds -upx.
+      AIO: tailscaled-${{ matrix.name }}-aio
       VERSION: ${{ needs.check-release.outputs.version }}
     steps:
       - name: Checkout this repo
@@ -175,8 +177,8 @@ jobs:
           mkdir -p ../dist
           sh ../build_custom.sh --small -o "../dist/tailscaled-$NAME" ./cmd/tailscaled
           sh ../build_custom.sh --small -o "../dist/tailscale-$NAME" ./cmd/tailscale
-          sh ../build_custom.sh --smallaio -o "../dist/tailscaled-$NAME-aio" ./cmd/tailscaled
-          for f in "tailscaled-$NAME" "tailscale-$NAME" "tailscaled-$NAME-aio"; do
+          sh ../build_custom.sh --smallaio -o "../dist/$AIO" ./cmd/tailscaled
+          for f in "tailscaled-$NAME" "tailscale-$NAME" "$AIO"; do
             upx --best -o "../dist/$f-upx" "../dist/$f"
           done
           ls -l ../dist
@@ -193,7 +195,7 @@ jobs:
             dist/tailscale-*)
               $QEMU "$f" version
               ;;
-            dist/tailscaled-aio-*)
+            "dist/$AIO"*)
               $QEMU "$f" --version
               ln -sf "$PWD/$f" "$cli/tailscale"
               $QEMU "$cli/tailscale" version
@@ -221,7 +223,7 @@ jobs:
           mkdir -p "$aio"
           for suffix in "" "-upx"; do
             smoke "dist/tailscaled-$NAME$suffix" "dist/tailscale-$NAME$suffix"
-            ln -sf "$PWD/dist/tailscaled-aio-$NAME$suffix" "$aio/tailscaled"
+            ln -sf "$PWD/dist/$AIO$suffix" "$aio/tailscaled"
             ln -sf tailscaled "$aio/tailscale"
             smoke "$aio/tailscaled" "$aio/tailscale"
           done
@@ -233,12 +235,12 @@ jobs:
         run: |
           SOURCE_DATE_EPOCH=$(git -C tailscale log -1 --format=%ct)
           export SOURCE_DATE_EPOCH
-          sh openwrt/build-packages.sh tailscale-small "$VERSION" "$OPENWRT_ARCH" "$OPENWRT_GLOB" "dist/tailscaled-aio-$NAME" packages
-          sh openwrt/build-packages.sh tailscale-small-upx "$VERSION" "$OPENWRT_ARCH" "$OPENWRT_GLOB" "dist/tailscaled-aio-$NAME-upx" packages
+          sh openwrt/build-packages.sh tailscale-small "$VERSION" "$OPENWRT_ARCH" "$OPENWRT_GLOB" "dist/$AIO" packages
+          sh openwrt/build-packages.sh tailscale-small-upx "$VERSION" "$OPENWRT_ARCH" "$OPENWRT_GLOB" "dist/$AIO-upx" packages
 
       - name: Test OpenWrt packages
         if: matrix.goarch == 'amd64'
-        run: sh openwrt/test-packages.sh packages "$VERSION" "dist/tailscaled-aio-$NAME"
+        run: sh openwrt/test-packages.sh packages "$VERSION" "dist/$AIO"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
