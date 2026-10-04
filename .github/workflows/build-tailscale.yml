@@ -175,8 +175,8 @@ jobs:
           mkdir -p ../dist
           sh ../build_custom.sh --small -o "../dist/tailscaled-$NAME" ./cmd/tailscaled
           sh ../build_custom.sh --small -o "../dist/tailscale-$NAME" ./cmd/tailscale
-          sh ../build_custom.sh --smallaio -o "../dist/tailscaled-aio-$NAME" ./cmd/tailscaled
-          for f in "tailscaled-$NAME" "tailscale-$NAME" "tailscaled-aio-$NAME"; do
+          sh ../build_custom.sh --smallaio -o "../dist/tailscaled-$NAME-aio" ./cmd/tailscaled
+          for f in "tailscaled-$NAME" "tailscale-$NAME" "tailscaled-$NAME-aio"; do
             upx --best -o "../dist/$f-upx" "../dist/$f"
           done
           ls -l ../dist
