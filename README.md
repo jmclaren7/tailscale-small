@@ -16,9 +16,9 @@ Using the `--extra-small` option in Tailscale's build script can cause problems.
 
 ## Variations
 
-- Reduced features only: best for memory-constrained systems. Use the separate `tailscale` and `tailscaled` binaries.
-- Reduced features and combined (AIO): best for space-constrained systems. Use `tailscaled-<platform>-aio`, rename it to `tailscaled` and create a symlink named `tailscale` pointing to it.
-- Compressed: both variations above also come UPX-compressed, with `-upx` in the name. They take less space but more RAM, because the whole binary is decompressed into memory at startup.
+- Reduced features only: best for memory-constrained systems. Use the separate `tailscaled-small-<platform>` and `tailscale-small-<platform>` binaries.
+- Reduced features and combined (AIO): best for space-constrained systems. Use `tailscaled-small-aio-<platform>`, rename it to `tailscaled` and create a symlink named `tailscale` pointing to it.
+- Compressed: both variations above also come UPX-compressed, with `-upx` before the platform (for example `tailscaled-small-aio-upx-<platform>`). They take less space but more RAM, because the whole binary is decompressed into memory at startup.
 
 ## OpenWrt packages
 

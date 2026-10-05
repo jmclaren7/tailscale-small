@@ -148,8 +148,11 @@ jobs:
       GOARM: ${{ matrix.goarm }}
       GOMIPS: ${{ matrix.gomips }}
       NAME: ${{ matrix.name }}
-      # The combined daemon + CLI binary; the UPX copy adds -upx.
-      AIO: tailscaled-${{ matrix.name }}-aio
+      # Release binaries are named <binary>-<platform>, and their UPX copies
+      # <binary>-upx-<platform>. AIO is the combined daemon + CLI binary.
+      DAEMON: tailscaled-small
+      CLI: tailscale-small
+      AIO: tailscaled-small-aio
       VERSION: ${{ needs.check-release.outputs.version }}
     steps:
       - name: Checkout this repo
@@ -175,11 +178,11 @@ jobs:
         working-directory: tailscale
         run: |
           mkdir -p ../dist
-          sh ../build_custom.sh --small -o "../dist/tailscaled-$NAME" ./cmd/tailscaled
-          sh ../build_custom.sh --small -o "../dist/tailscale-$NAME" ./cmd/tailscale
-          sh ../build_custom.sh --smallaio -o "../dist/$AIO" ./cmd/tailscaled
-          for f in "tailscaled-$NAME" "tailscale-$NAME" "$AIO"; do
-            upx --best -o "../dist/$f-upx" "../dist/$f"
+          sh ../build_custom.sh --small -o "../dist/$DAEMON-$NAME" ./cmd/tailscaled
+          sh ../build_custom.sh --small -o "../dist/$CLI-$NAME" ./cmd/tailscale
+          sh ../build_custom.sh --smallaio -o "../dist/$AIO-$NAME" ./cmd/tailscaled
+          for f in "$DAEMON" "$CLI" "$AIO"; do
+            upx --best -o "../dist/$f-upx-$NAME" "../dist/$f-$NAME"
           done
           ls -l ../dist
 
@@ -192,10 +195,10 @@ jobs:
           for f in dist/*; do
             echo "== $f"
             case "$f" in
-            dist/tailscale-*)
+            "dist/$CLI-"*)
               $QEMU "$f" version
               ;;
-            "dist/$AIO"*)
+            "dist/$AIO-"*)
               $QEMU "$f" --version
               ln -sf "$PWD/$f" "$cli/tailscale"
               $QEMU "$cli/tailscale" version
@@ -221,9 +224,9 @@ jobs:
           # The AIO binary acts as the CLI when it is run as "tailscale".
           aio="$RUNNER_TEMP/aio"
           mkdir -p "$aio"
-          for suffix in "" "-upx"; do
-            smoke "dist/tailscaled-$NAME$suffix" "dist/tailscale-$NAME$suffix"
-            ln -sf "$PWD/dist/$AIO$suffix" "$aio/tailscaled"
+          for upx in "" "-upx"; do
+            smoke "dist/$DAEMON$upx-$NAME" "dist/$CLI$upx-$NAME"
+            ln -sf "$PWD/dist/$AIO$upx-$NAME" "$aio/tailscaled"
             ln -sf tailscaled "$aio/tailscale"
             smoke "$aio/tailscaled" "$aio/tailscale"
           done
@@ -235,12 +238,12 @@ jobs:
         run: |
           SOURCE_DATE_EPOCH=$(git -C tailscale log -1 --format=%ct)
           export SOURCE_DATE_EPOCH
-          sh openwrt/build-packages.sh tailscale-small "$VERSION" "$OPENWRT_ARCH" "$OPENWRT_GLOB" "dist/$AIO" packages
-          sh openwrt/build-packages.sh tailscale-small-upx "$VERSION" "$OPENWRT_ARCH" "$OPENWRT_GLOB" "dist/$AIO-upx" packages
+          sh openwrt/build-packages.sh tailscale-small "$VERSION" "$OPENWRT_ARCH" "$OPENWRT_GLOB" "dist/$AIO-$NAME" packages
+          sh openwrt/build-packages.sh tailscale-small-upx "$VERSION" "$OPENWRT_ARCH" "$OPENWRT_GLOB" "dist/$AIO-upx-$NAME" packages
 
       - name: Test OpenWrt packages
         if: matrix.goarch == 'amd64'
-        run: sh openwrt/test-packages.sh packages "$VERSION" "dist/$AIO"
+        run: sh openwrt/test-packages.sh packages "$VERSION" "dist/$AIO-$NAME"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
