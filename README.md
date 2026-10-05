@@ -22,13 +22,13 @@ Using the `--extra-small` option in Tailscale's build script can cause problems.
 
 ## OpenWrt packages
 
-Each release includes OpenWrt packages built around the AIO binary: `tailscale-small` (uncompressed) and `tailscale-small-upx` (UPX-compressed). They install the same files as the official `tailscale` package (`/usr/sbin/tailscaled`, the `tailscale` symlink, `/etc/init.d/tailscale` and `/etc/config/tailscale`), so existing configs and LuCI apps keep working.
+Each release includes OpenWrt packages built around the AIO binary, in `.ipk` and `.apk` versions. Like the binaries, the files are named `tailscale-small-aio_<version>-r1_<arch>` (uncompressed) and `tailscale-small-aio-upx_<version>-r1_<arch>` (UPX-compressed). The packages they install are called `tailscale-small` and `tailscale-small-upx`, so use those names with `opkg remove` or `apk del`. They install the same files as the official `tailscale` package (`/usr/sbin/tailscaled`, the `tailscale` symlink, `/etc/init.d/tailscale` and `/etc/config/tailscale`), so existing configs and LuCI apps keep working.
 
 1. Find your architecture with `grep DISTRIB_ARCH /etc/openwrt_release` and download the package with the matching suffix from the table above.
 2. Remove the official package if it is installed: `opkg remove tailscale` or `apk del tailscale`. Your login state in `/etc/tailscale` is kept.
 3. Install it:
-   - OpenWrt 24.10 and older (opkg): `opkg update && opkg install ./tailscale-small_<version>-r1_<arch>.ipk`
-   - OpenWrt 25.12 and newer (apk): `apk update && apk add --allow-untrusted ./tailscale-small_<version>-r1_<arch>.apk`
+   - OpenWrt 24.10 and older (opkg): `opkg update && opkg install ./tailscale-small-aio_<version>-r1_<arch>.ipk`
+   - OpenWrt 25.12 and newer (apk): `apk update && apk add --allow-untrusted ./tailscale-small-aio_<version>-r1_<arch>.apk`
 4. Run `tailscale up`.
 
 Notes:

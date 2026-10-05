@@ -22,7 +22,9 @@
 #   ARCH_LABEL  arch used in the file names, e.g. mipsel
 #   ARCH_GLOB   shell pattern for DISTRIB_ARCH, e.g. 'mipsel_*'
 #   BINARY      tailscaled built with --smallaio
-#   OUTDIR      directory for the .ipk and .apk files
+#   OUTDIR      directory for the .ipk and .apk files, named like the AIO
+#               binaries: tailscale-small-upx is written to
+#               tailscale-small-aio-upx_VERSION-r1_ARCH_LABEL.ipk and .apk
 #
 # Environment:
 #   PKG_RELEASE        package release number (default 1)
@@ -51,9 +53,17 @@ url="https://github.com/$repo"
 maintainer="$repo <$url>"
 apk_image=${APK_IMAGE:-public.ecr.aws/docker/library/alpine:3.24}
 
+# The files are named like the AIO release binaries (aio before upx), but the
+# installed package keeps its name.
 case "$name" in
-*-upx) other=${name%-upx} ;;
-*) other=$name-upx ;;
+*-upx)
+	other=${name%-upx}
+	file=$other-aio-upx
+	;;
+*)
+	other=$name-upx
+	file=$name-aio
+	;;
 esac
 
 description="Tailscale with a reduced feature set for devices with little flash or RAM. A single tailscaled binary with the tailscale CLI linked to it."
@@ -64,6 +74,7 @@ esac
 here=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$outdir"
 outdir=$(cd "$outdir" && pwd)
+pkgfile="$outdir/${file}_${pkgver}_${arch_label}"
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
@@ -159,7 +170,7 @@ EOF
 
 	tar_gz "$control" "$ipk/control.tar.gz"
 	echo "2.0" > "$ipk/debian-binary"
-	tar_gz "$ipk" "$outdir/${name}_${pkgver}_${arch_label}.ipk" ./debian-binary ./data.tar.gz ./control.tar.gz
+	tar_gz "$ipk" "$pkgfile.ipk" ./debian-binary ./data.tar.gz ./control.tar.gz
 }
 
 # .apk: built with `apk mkpkg`, with the same metadata files and maintainer
@@ -217,7 +228,7 @@ EOF
 		--script "post-install:$scripts/post-install" \
 		--script "post-upgrade:$scripts/post-upgrade" \
 		--script "pre-deinstall:$scripts/pre-deinstall"
-	apk_out="$outdir/${name}_${pkgver}_${arch_label}.apk"
+	apk_out="$pkgfile.apk"
 
 	# apk records file owners as found on disk, so make everything root-owned.
 	# Under Docker that happens on a copy, leaving the bind mount untouched.
@@ -238,4 +249,4 @@ EOF
 
 build_ipk
 build_apk
-ls -l "$outdir/${name}_${pkgver}_${arch_label}".*
+ls -l "$pkgfile".*
