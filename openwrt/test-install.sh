@@ -23,9 +23,11 @@ else
 	pkg_remove() { apk del --no-network "$@"; }
 fi
 
-plain=/pkgs/tailscale-small_${pkgver}_x86_64.$fmt
-upx=/pkgs/tailscale-small-upx_${pkgver}_x86_64.$fmt
-wrong_arch=/pkgs/tailscale-small_${pkgver}_mipsel.$fmt
+# The files are named like the AIO binaries; the packages are tailscale-small
+# and tailscale-small-upx.
+plain=/pkgs/tailscale-small-aio_${pkgver}_x86_64.$fmt
+upx=/pkgs/tailscale-small-aio-upx_${pkgver}_x86_64.$fmt
+wrong_arch=/pkgs/tailscale-small-aio_${pkgver}_mipsel.$fmt
 
 step() { printf '\n### %s\n' "$*"; }
 fail() { echo "FAIL: $*"; exit 1; }
@@ -52,7 +54,11 @@ else
 fi
 
 for pkg in "$plain" "$upx"; do
-	name=$(basename "$pkg" | cut -d _ -f 1)
+	if [ "$pkg" = "$plain" ]; then
+		name=tailscale-small other=$upx
+	else
+		name=tailscale-small-upx other=$plain
+	fi
 
 	step "install $name"
 	pkg_install "$pkg"
@@ -64,8 +70,6 @@ for pkg in "$plain" "$upx"; do
 	tailscale version
 
 	step "$name conflicts with the other variant"
-	other=$upx
-	[ "$pkg" = "$plain" ] || other=$plain
 	if pkg_install "$other" > /tmp/out 2>&1; then
 		cat /tmp/out
 		fail "both variants installed at once"

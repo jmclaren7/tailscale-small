@@ -12,9 +12,9 @@ Find your device's architecture with `grep DISTRIB_ARCH /etc/openwrt_release`, t
 | `mipsel_*` | `*_mipsel.ipk` / `*_mipsel.apk` |
 | `mips_*` | `*_mips.ipk` / `*_mips.apk` |
 
-- `tailscale-small` is the uncompressed binary. `tailscale-small-upx` is UPX-compressed: it takes less flash but more RAM.
-- OpenWrt 24.10 and older (opkg): `opkg update && opkg install ./tailscale-small_${VERSION}-r1_<arch>.ipk`
-- OpenWrt 25.12 and newer (apk): `apk update && apk add --allow-untrusted ./tailscale-small_${VERSION}-r1_<arch>.apk`
+- `tailscale-small-aio_*` installs the `tailscale-small` package with the uncompressed AIO binary. `tailscale-small-aio-upx_*` installs `tailscale-small-upx`, which is UPX-compressed: it takes less flash but more RAM.
+- OpenWrt 24.10 and older (opkg): `opkg update && opkg install ./tailscale-small-aio_${VERSION}-r1_<arch>.ipk`
+- OpenWrt 25.12 and newer (apk): `apk update && apk add --allow-untrusted ./tailscale-small-aio_${VERSION}-r1_<arch>.apk`
 - Then run `tailscale up`. Remove the official `tailscale` package first if it is installed; your login state in `/etc/tailscale` is kept.
 
 ### Binaries
