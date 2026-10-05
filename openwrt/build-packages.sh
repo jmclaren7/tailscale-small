@@ -236,6 +236,7 @@ EOF
 		chown -R 0:0 "$aroot"
 		apk mkpkg "$@" --files "$aroot" --output "$apk_out"
 	else
+		sh "$here/pull-image.sh" "$apk_image"
 		docker run --rm -v "$work:$work" -v "$outdir:$outdir" "$apk_image" sh -euc '
 			out=$1
 			cp -a "$2" /pkgroot

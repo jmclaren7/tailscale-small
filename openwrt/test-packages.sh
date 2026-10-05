@@ -41,6 +41,7 @@ mkdir -p "$work/ipk/data"
 tar -C "$work/ipk/data" --owner=0 --group=0 -czf "$work/ipk/data.tar.gz" .
 tar -C "$work/ipk" --owner=0 --group=0 -czf "$work/kmod-tun.ipk" ./debian-binary ./data.tar.gz ./control.tar.gz
 
+sh "$here/pull-image.sh" "$alpine_image" "$ipk_image" "$apk_image"
 docker run --rm -v "$work:/work" "$alpine_image" sh -euc '
 	apk mkpkg --info name:kmod-tun --info version:0-r0 --info arch:noarch \
 		--info "description:test dummy" --output /work/kmod-tun.apk
