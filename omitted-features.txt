@@ -13,11 +13,14 @@
 # Size notes are approximate, measured on linux/mipsle (on disk / gzipped).
 
 # Cloud, desktop and platform integrations that don't apply to routers
+androidbin          # running as a raw binary on Android (Termux, adb); inert on regular Linux
+androiddns          # DNS via Android's dnsproxyd for raw binaries on Android
 aws                 # AWS integration
 bird                # Bird BGP integration
 cloud               # cloud environment detection
 dbus                # Linux DBus (no DBus on OpenWrt); needed by resolved and networkmanager
 desktop_sessions    # desktop sessions
+favorites           # GUI client pins for favorite devices, exit nodes and services
 flashappliance      # appliance image deployment CLI commands
 kube                # Kubernetes integration
 networkmanager      # NetworkManager DNS; without it tailscaled won't start where NetworkManager manages /etc/resolv.conf
@@ -65,6 +68,7 @@ wakeonlan           # Wake-on-LAN
 
 # Metrics, logging and debugging
 clientmetrics       # client metrics
+connreject          # connection-rejection diagnostics (debug-rejects LocalAPI / c2n)
 debug               # assorted debug support
 debugeventbus       # eventbus debugging
 debugportmapper     # portmapper debugging
