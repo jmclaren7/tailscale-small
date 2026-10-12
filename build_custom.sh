@@ -34,9 +34,10 @@ ldflags="-X tailscale.com/version.longStamp=${VERSION_LONG} -X tailscale.com/ver
 # Features kept by --small and --smallaio. `featuretags --min` omits every
 # feature not listed here, including any feature Tailscale adds in a future
 # release, so new feature tags need reviewing (see omitted-features.txt).
-#   ipnbus:     required for `tailscale up` to apply prefs and start login
-#   bakedroots: Let's Encrypt roots as a fallback when the CA bundle is missing
-SMALL_FEATURES="osrouter,portmapper,dns,useexitnode,advertiseexitnode,useroutes,advertiseroutes,unixsocketidentity,iptables,listenrawdisco,ipnbus,bakedroots"
+#   ipnbus:          required for `tailscale up` to apply prefs and start login
+#   bakedroots:      Let's Encrypt roots as a fallback when the CA bundle is missing
+#   dnsresolvecache: last-known-good control plane IPs for boots with broken DNS
+SMALL_FEATURES="osrouter,portmapper,dns,useexitnode,advertiseexitnode,useroutes,advertiseroutes,unixsocketidentity,iptables,listenrawdisco,ipnbus,bakedroots,dnsresolvecache"
 
 # min_tags prints the build tags that omit everything except the given
 # features. featuretags ignores unknown names in --add, which would silently
