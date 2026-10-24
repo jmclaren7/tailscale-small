@@ -51,7 +51,10 @@ mtime=${SOURCE_DATE_EPOCH:-$(date +%s)}
 repo=${GITHUB_REPOSITORY:-jmclaren7/tailscale-small}
 url="https://github.com/$repo"
 maintainer="$repo <$url>"
-apk_image=${APK_IMAGE:-public.ecr.aws/docker/library/alpine:3.24}
+# Docker Hub doesn't rate-limit pulls of public images on GitHub-hosted
+# runners. ECR Public's anonymous quota is per IP, and the runners share
+# theirs: pulls failed for days with "toomanyrequests: Data limit exceeded".
+apk_image=${APK_IMAGE:-alpine:3.24}
 
 # The files are named like the AIO release binaries (aio before upx), but the
 # installed package keeps its name.

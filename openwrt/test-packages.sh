@@ -20,7 +20,8 @@ binary=$3
 pkgver="$version-r${PKG_RELEASE:-1}"
 ipk_image=${OPENWRT_IPK_IMAGE:-ghcr.io/openwrt/rootfs:x86-64-24.10.5}
 apk_image=${OPENWRT_APK_IMAGE:-ghcr.io/openwrt/rootfs:x86-64-25.12.5}
-alpine_image=${APK_IMAGE:-public.ecr.aws/docker/library/alpine:3.24}
+# From Docker Hub, as in build-packages.sh.
+alpine_image=${APK_IMAGE:-alpine:3.24}
 
 here=$(cd "$(dirname "$0")" && pwd)
 scripts=$(cd "$here/../scripts" && pwd)
